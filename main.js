@@ -9,8 +9,20 @@ $( document ).ready(function() {
 let loanAmount = 0;
 let interestRate = 0;
 let loanTermYears = 0;
+let lastChangedPaymentAmount = 0;
 let originalPaymentSchedule = [];
 let updatedPaymentSchedule = [];
+
+function reset() {
+    loanAmount = 0;
+    interestRate = 0;
+    loanTermYears = 0;
+    lastChangedPaymentAmount = 0;
+    originalPaymentSchedule = [];
+    updatedPaymentSchedule = [];
+    $('#paymentScheduleTable tbody').empty();
+    calculateMortgage();
+}
 
 function calculateMortgagePayment(paymentNumber, loanAmount, interestRate, numberOfPayments, originalMortgage = false) {
     // Convert annual interest rate to monthly
@@ -38,11 +50,6 @@ function calculateMortgagePayment(paymentNumber, loanAmount, interestRate, numbe
     let interestOnly = loanAmount * monthlyInterestRate;
     let principalOnly = monthlyPayment - interestOnly;
 
-    if (loanAmount < principalOnly) {
-        monthlyPayment = interestOnly + loanAmount;
-        principalOnly = monthlyPayment - interestOnly;
-    }
-
     let extraPrincipalPayment = 0;
     let changedPaymentTo = 0;
 
@@ -56,9 +63,25 @@ function calculateMortgagePayment(paymentNumber, loanAmount, interestRate, numbe
         if (isNaN(changedPaymentTo))
             changedPaymentTo = 0;
 
+        if (changedPaymentTo > 0 || lastChangedPaymentAmount > 0) {
+            if (changedPaymentTo <= 0) {
+                monthlyPayment = lastChangedPaymentAmount;
+            } else {
+                lastChangedPaymentAmount = changedPaymentTo;
+                monthlyPayment = changedPaymentTo;
+            }
+            principalOnly = monthlyPayment - interestOnly
+        }
+
         if (extraPrincipalPayment > 0) {
             principalOnly += extraPrincipalPayment
         }
+    }
+
+    // handle the last payment where the balance may be less than the payment amount
+    if (loanAmount < principalOnly) {
+        monthlyPayment = interestOnly + loanAmount;
+        principalOnly = monthlyPayment - interestOnly;
     }
 
     let balanceAfterPayment = loanAmount - (monthlyPayment - interestOnly)
@@ -80,6 +103,7 @@ function calculateMortgage() {
     let loanAmount = $("#loanAmount").val();
     let interestRate = $("#interestRate").val();
     let loanTermYears = $("#loanTerm").val();
+    lastChangedPaymentAmount = 0;
 
     calculatePaymentSchedule(true); // calculate original mortgage
     $("#minMonthlyPayment").val(originalPaymentSchedule[0].totalPayment.toFixed(2));
@@ -142,7 +166,7 @@ function calculateMortgage() {
                     <div class="input-group-prepend">
                         <span class="input-group-text">$</span>
                     </div>
-                    <input type="number" class="form-control" placeholder="" id="pmt${payment.paymentNumber}ChangePayment" />
+                    <input type="number" class="form-control" placeholder="" id="pmt${payment.paymentNumber}ChangePayment" value=${payment.changePayment} />
                 </div></td>
             </tr>
         `);

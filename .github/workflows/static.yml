@@ -1,0 +1,55 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Copy files to another repository
+        # You may pin to the exact commit or the version.
+        # uses: nkoppel/push-files-to-another-repository@86ddb431c42a9a43ba90a303ef1cee82d159a410
+        uses: nkoppel/push-files-to-another-repository@v1.1.3
+        with:
+          # The files/directories to copy to the destination repository. Can have multiple space-separated filenames and globbing.
+          source-files: 'mortgage-saver/'
+          # Name of the destination username/organization
+          destination-username: 'bentigano'
+          # Name of the destination repository
+          destination-repository: 'bentigano.github.io'
+          # [Optional] set target branch name for the destination repository.
+          destination-branch: 'master' # optional, default is master
+          # [Opitonal] Directory to copy files into in the destination repository
+          destination-directory: 'mortgage-saver' # optional, default is .
+          # [Optional] Username for the commit. Defaults to the destination username
+          commit-username: 'bentigano' # optional, default is 
+          # Email for the commit
+          commit-email: 'bentigano@gmail.com'
+          # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
+          commit-message: 'Update from ORIGIN_COMMIT' # optional, default is Update from ORIGIN_COMMIT
+                

@@ -39,7 +39,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           # The files/directories to copy to the destination repository. Can have multiple space-separated filenames and globbing.
-          source-files: 'mortgage-saver/'
+          source-files: '/'
           # Name of the destination username/organization
           destination-username: 'bentigano'
           # Name of the destination repository
@@ -47,7 +47,7 @@ jobs:
           # [Optional] set target branch name for the destination repository.
           destination-branch: 'main' # optional, default is master
           # [Opitonal] Directory to copy files into in the destination repository
-          destination-directory: 'mortgage-saver' # optional, default is .
+          destination-directory: '.' # optional, default is .
           # [Optional] Username for the commit. Defaults to the destination username
           commit-username: 'bentigano' # optional, default is 
           # Email for the commit

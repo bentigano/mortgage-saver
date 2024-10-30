@@ -39,7 +39,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           # The files/directories to copy to the destination repository. Can have multiple space-separated filenames and globbing.
-          source-files: '/'
+          source-files: 'mortgage-saver'
           # Name of the destination username/organization
           destination-username: 'bentigano'
           # Name of the destination repository

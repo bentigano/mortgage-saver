@@ -1,22 +1,44 @@
-// default some values for testing
-$( document ).ready(function() {
-    $("#loanAmount").val(400000);
-    $("#interestRate").val(5);
-    $("#loanTerm").val(15);
-    calculateMortgage();
-});
+// const ctx = document.getElementById('myChart');
+// new Chart(ctx, {
+//     type: 'doughnut',
+//     data: {
+//       labels: ['Principal', 'Interest'],
+//       datasets: [{
+//         data: [12, 19],
+//         borderWidth: 2
+//       }]
+//     },
+//     options: {
+//         rotation: -90,
+//         circumference: 180,
+//       }
+//   });
 
-let loanAmount = 0;
-let interestRate = 0;
-let loanTermYears = 0;
-let lastChangedPaymentAmount = 0;
-let originalPaymentSchedule = [];
-let updatedPaymentSchedule = [];
+// default some values for testing
+// $( document ).ready(function() {
+//     $("#loanAmount").val(400000);
+//     $("#interestRate").val(5);
+//     $("#loanTerm").val(15);
+//     const today = new Date();
+//     // Format the date to YYYY-MM-DD (required by the input type="date")
+//     const formattedDate = today.toISOString().slice(0, 10);
+//     $("#firstPaymentDate").val(formattedDate);
+//     calculateMortgage();
+// });
+
+var loanAmount = 0;
+var interestRate = 0;
+var loanTermYears = 0;
+var firstPaymentDate = "";
+var lastChangedPaymentAmount = 0;
+var originalPaymentSchedule = [];
+var updatedPaymentSchedule = [];
 
 function reset() {
     loanAmount = 0;
     interestRate = 0;
     loanTermYears = 0;
+    firstPaymentDate = "";
     lastChangedPaymentAmount = 0;
     originalPaymentSchedule = [];
     updatedPaymentSchedule = [];
@@ -24,7 +46,7 @@ function reset() {
     calculateMortgage();
 }
 
-function calculateMortgagePayment(paymentNumber, loanAmount, interestRate, numberOfPayments, originalMortgage = false) {
+function calculateMortgagePayment(paymentNumber, paymentDate, loanAmount, interestRate, numberOfPayments, originalMortgage = false) {
     // Convert annual interest rate to monthly
     const monthlyInterestRate = interestRate / 100 / 12;
 
@@ -76,6 +98,8 @@ function calculateMortgagePayment(paymentNumber, loanAmount, interestRate, numbe
         if (extraPrincipalPayment > 0) {
             principalOnly += extraPrincipalPayment
         }
+
+        paymentDate.setMonth(paymentDate.getMonth() + 1);
     }
 
     // handle the last payment where the balance may be less than the payment amount
@@ -87,6 +111,7 @@ function calculateMortgagePayment(paymentNumber, loanAmount, interestRate, numbe
     let balanceAfterPayment = loanAmount - (monthlyPayment - interestOnly)
 
     return Payment = {
+        paymentDate: paymentDate.toLocaleDateString(),
         totalPayment: monthlyPayment,
         principalPayment: principalOnly,
         interestPayment: interestOnly,
@@ -103,6 +128,10 @@ function calculateMortgage() {
     let loanAmount = $("#loanAmount").val();
     let interestRate = $("#interestRate").val();
     let loanTermYears = $("#loanTerm").val();
+    firstPaymentDate = new Date(Date.parse($("#firstPaymentDate").val()));
+    firstPaymentDate.setDate(firstPaymentDate.getDate() + 1);
+    firstPaymentDate.setMonth(firstPaymentDate.getMonth() - 1);    
+
     lastChangedPaymentAmount = 0;
 
     calculatePaymentSchedule(true); // calculate original mortgage
@@ -150,6 +179,7 @@ function calculateMortgage() {
             <tr>
                 <th scope="row">${payment.paymentNumber}</th>
                 <td>${Math.ceil((payment.paymentNumber) / 12)}</td>
+                <td>${payment.paymentDate}</td>
                 <td>${payment.resultingBalance.toFixed(2)}</td>
                 <td>${payment.principalPayment.toFixed(2)}</td>
                 <td>${payment.interestPayment.toFixed(2)}</td>
@@ -179,11 +209,16 @@ function calculatePaymentSchedule(originalMortgage = false) {
         loanAmount = $("#loanAmount").val();
         interestRate = $("#interestRate").val();
         loanTermYears = $("#loanTerm").val();
+    } else {
+        firstPaymentDate = new Date(Date.parse($("#firstPaymentDate").val()));
+        firstPaymentDate.setDate(firstPaymentDate.getDate() + 1);
+        firstPaymentDate.setMonth(firstPaymentDate.getMonth() - 1);
     }
 
     let inLoanAmount = loanAmount;
     let inInterestRate = interestRate;
     let inLoanTermYears = loanTermYears;
+    let inFirstPaymentDate = firstPaymentDate;
     
     let numberOfPayments = inLoanTermYears * 12;
 
@@ -194,7 +229,7 @@ function calculatePaymentSchedule(originalMortgage = false) {
 
     for (let paymentNumber = 1; paymentNumber <= numberOfPayments; paymentNumber++) {   
 
-        let payment = calculateMortgagePayment(paymentNumber, inLoanAmount, inInterestRate, numberOfPayments, originalMortgage);
+        let payment = calculateMortgagePayment(paymentNumber, inFirstPaymentDate, inLoanAmount, inInterestRate, numberOfPayments, originalMortgage);
 
         if (originalMortgage)
             originalPaymentSchedule.push(payment);

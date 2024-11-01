@@ -15,16 +15,21 @@
 //   });
 
 // default some values for testing
-// $( document ).ready(function() {
-//     $("#loanAmount").val(400000);
-//     $("#interestRate").val(5);
-//     $("#loanTerm").val(15);
-//     const today = new Date();
-//     // Format the date to YYYY-MM-DD (required by the input type="date")
-//     const formattedDate = today.toISOString().slice(0, 10);
-//     $("#firstPaymentDate").val(formattedDate);
-//     calculateMortgage();
-// });
+$( document ).ready(function() {
+    // $("#loanAmount").val("$400,000.00");
+    // $("#interestRate").val(5);
+    // $("#loanTerm").val(15);
+    // const today = new Date();
+    // // Format the date to YYYY-MM-DD (required by the input type="date")
+    // const formattedDate = today.toISOString().slice(0, 10);
+    // $("#firstPaymentDate").val(formattedDate);
+    calculateMortgage();
+    formatCurrencyFields();
+});
+
+function formatCurrencyFields() {
+    $('.currency-field').maskMoney({prefix:'$ ', allowNegative: false, allowZero: true, thousands:',', decimal:'.', affixesStay: true});
+}
 
 var loanAmount = 0;
 var interestRate = 0;
@@ -45,6 +50,11 @@ function reset() {
     $('#paymentScheduleTable tbody').empty();
     calculateMortgage();
 }
+
+var USDollar = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+});
 
 function calculateMortgagePayment(paymentNumber, paymentDate, loanAmount, interestRate, numberOfPayments, originalMortgage = false) {
     // Convert annual interest rate to monthly
@@ -76,9 +86,16 @@ function calculateMortgagePayment(paymentNumber, paymentDate, loanAmount, intere
     let changedPaymentTo = 0;
 
     if (!originalMortgage) {
-        // look at one time extra payment fields and changed payment fields
-        extraPrincipalPayment = parseFloat($(`#pmt${paymentNumber}ExtraPayment`).val());
-        changedPaymentTo = parseFloat($(`#pmt${paymentNumber}ChangePayment`).val());
+        // look at one time extra payment fields and changed payment fields (remove currency and thousand seperators)
+        let extraPrincipalPaymentInput = $(`#pmt${paymentNumber}ExtraPayment`).val();
+        let changedPaymentToInput = $(`#pmt${paymentNumber}ChangePayment`).val();
+
+        if (extraPrincipalPaymentInput != undefined) {
+            extraPrincipalPayment = parseFloat(extraPrincipalPaymentInput.replace(/[^0-9\.-]+/g,""));
+        }
+        if (changedPaymentToInput != undefined) {
+            changedPaymentTo = parseFloat(changedPaymentToInput.replace(/[^0-9\.-]+/g,""));
+        }
 
         if (isNaN(extraPrincipalPayment))
             extraPrincipalPayment = 0;
@@ -135,15 +152,15 @@ function calculateMortgage() {
     lastChangedPaymentAmount = 0;
 
     calculatePaymentSchedule(true); // calculate original mortgage
-    $("#minMonthlyPayment").val(originalPaymentSchedule[0].totalPayment.toFixed(2));
+    $("#minMonthlyPayment").val(USDollar.format(originalPaymentSchedule[0].totalPayment));
 
     calculatePaymentSchedule(false); // calculate updated mortgage (with any payment changes)
 
 
     let originalInterestDue = originalPaymentSchedule.reduce((accumulator, currentValue) => accumulator + currentValue.interestPayment, 0);
     let totalInterestPaid = updatedPaymentSchedule.reduce((accumulator, currentValue) => accumulator + currentValue.interestPayment, 0);
-    $("#totalInterestPaid").val(totalInterestPaid.toFixed(2));
-    $("#totalInterestSaved").val((originalInterestDue - totalInterestPaid).toFixed(2));
+    $("#totalInterestPaid").val(USDollar.format(totalInterestPaid));
+    $("#totalInterestSaved").val(USDollar.format((originalInterestDue - totalInterestPaid)));
 
     let paymentsSaved = originalPaymentSchedule.length - updatedPaymentSchedule.length;
     let yearsSaved = Math.trunc(paymentsSaved / 12);
@@ -180,33 +197,33 @@ function calculateMortgage() {
                 <th scope="row">${payment.paymentNumber}</th>
                 <td>${Math.ceil((payment.paymentNumber) / 12)}</td>
                 <td>${payment.paymentDate}</td>
-                <td>${payment.resultingBalance.toFixed(2)}</td>
-                <td>${payment.principalPayment.toFixed(2)}</td>
-                <td>${payment.interestPayment.toFixed(2)}</td>
-                <td>${payment.totalPayment.toFixed(2)}</td>
-                <td>${totalPrincipal.toFixed(2)}</td>
-                <td>${totalInterest.toFixed(2)}</td>
-                <td><div class="input-group input-group-sm">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">$</span>
+                <td>${USDollar.format(payment.resultingBalance)}</td>
+                <td>${USDollar.format(payment.principalPayment)}</td>
+                <td>${USDollar.format(payment.interestPayment)}</td>
+                <td>${USDollar.format(payment.totalPayment)}</td>
+                <!--<td>${USDollar.format(totalPrincipal)}</td>
+                <td>${USDollar.format(totalInterest)}</td>-->
+                <td>
+                    <div class="input-group input-group-sm mx-auto">
+                        <input type="text" class="form-control mx-auto currency-field" style="max-width:10em;" placeholder="" id="pmt${payment.paymentNumber}ExtraPayment" value='${payment.extraPrincipal > 0 ? USDollar.format(payment.extraPrincipal) : ''}' />
                     </div>
-                    <input type="number" class="form-control" placeholder="" id="pmt${payment.paymentNumber}ExtraPayment" value=${payment.extraPrincipal} />
-                </div></td>
-                <td><div class="input-group input-group-sm">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">$</span>
+                </td>
+                <td>
+                    <div class="input-group input-group-sm mx-auto">
+                        <input type="text" class="form-control mx-auto currency-field" style="max-width:10em;" placeholder="" id="pmt${payment.paymentNumber}ChangePayment" value='${payment.changePayment > 0 ? USDollar.format(payment.changePayment) : ''}' />
                     </div>
-                    <input type="number" class="form-control" placeholder="" id="pmt${payment.paymentNumber}ChangePayment" value=${payment.changePayment} />
-                </div></td>
+                </td>
             </tr>
         `);
     });
+
+    formatCurrencyFields();
 }
 
 function calculatePaymentSchedule(originalMortgage = false) {
 
     if (originalMortgage) {
-        loanAmount = $("#loanAmount").val();
+        loanAmount = $("#loanAmount").val().replace(/[^0-9\.-]+/g,"");
         interestRate = $("#interestRate").val();
         loanTermYears = $("#loanTerm").val();
     } else {
